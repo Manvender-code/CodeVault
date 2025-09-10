@@ -8,14 +8,12 @@
 using namespace std;
 namespace fs = filesystem;
 
-// Since we were allowed to use SHA-1 or a custom hash we used our own simpler custom hash.
 string Hash(const string &content)
 {
     hash<string> hasher;
     return to_string(hasher(content));
 }
 
-// Here we declared some global paths to avoid code duplication.
 const string Code_Vault = ".mygit";
 const string Objects = Code_Vault + "/objects";
 const string Commits = Code_Vault + "/commits";
@@ -23,8 +21,6 @@ const string Head_File = Code_Vault + "/HEAD.txt";
 const string Index_File = Code_Vault + "/index.txt";
 const string Branch_File = Code_Vault + "/branches.txt";
 
-/*This function is written to get the current timestamp, and it's usefull because the
-current timestamp is used when a new file is commited and displayed on the log.*/
 string getCurrentTime()
 {
     time_t now = time(0);
@@ -42,32 +38,30 @@ void init()
     fs::create_directory(Code_Vault);
     fs::create_directory(Objects);
     fs::create_directory(Commits);
-    ofstream(Head_File) << "main";            // default branch
-    ofstream(Branch_File) << "main:null\n"; // branch -> commit
-    ofstream(Index_File);                     // empty staging area
-
-    
+    ofstream(Head_File) << "main";
+    ofstream(Branch_File) << "main:null\n";
+    ofstream(Index_File);
     cout << "Initialized empty mygit repository." << endl;
 }
 
 void add(const string &filename)
 {
-    ifstream inFile(filename); // open the file
+    ifstream inFile(filename);
     if (!inFile)
     {
         cout << "File not found: " << filename << endl;
         return;
     }
     stringstream buffer;
-    buffer << inFile.rdbuf(); // populating buffer
-    string content = buffer.str(); 
-    string hash = Hash(content);  // hashing all content in buffer
+    buffer << inFile.rdbuf();
+    string content = buffer.str();
+    string hash = Hash(content);
 
-    ofstream outFile(Objects + "/" + hash); // store content in objects/hash
+    ofstream outFile(Objects + "/" + hash);
     outFile << content;
     outFile.close();
 
-    ofstream indexOut(Index_File, ios::app); // insert file_name:hash in index 
+    ofstream indexOut(Index_File, ios::app);
     indexOut << filename << ":" << hash << endl;
 
     cout << "Staged file: " << filename << endl;
@@ -77,7 +71,7 @@ string getCurrentBranch()
 {
     ifstream headIn(Head_File);
     string branch;
-    getline(headIn, branch); // Reads the first line from Head_File and stores it in branch.
+    getline(headIn, branch);
     return branch;
 }
 
@@ -150,7 +144,7 @@ void commit(const string &message)
 
     updateLatestCommit(branch, commitHash);
 
-    ofstream(Index_File); // clear staging area
+    ofstream(Index_File);
     cout << "Committed. Hash: " << commitHash << endl;
 }
 
@@ -174,7 +168,7 @@ void log()
                 cout << line << endl;
             }
         }
-        cout << "###################################" << endl;
+        cout << "-------------------------------------------------------------" << endl;
 
         in.clear();
         in.seekg(0, ios::beg);
@@ -211,7 +205,6 @@ void checkout(const string &target)
     {
         cout << "Checked out commit: " << target << endl;
     }
-
     else
     {
         cout << "Branch or commit not found: " << target << endl;
@@ -261,7 +254,7 @@ void merge(const string &targetBranch)
             {
                 cout << "CONFLICT: both modified " << file << endl;
             }
-            mergedFiles[file] = hash; // prefer current
+            mergedFiles[file] = hash;
         }
     }
 
@@ -331,7 +324,6 @@ int main(int argc, char *argv[])
     if (argc < 2)
     {
         cout << "If mygit is not added to system add that using: " << endl;
-        // cout << "But if mygit is added to system path you can remove the ./ before mygit to use it."<< endl;
         cout << endl;
         cout << "1. ./mygit init" << endl;
         cout << "2. ./mygit add <file>" << endl;
@@ -350,42 +342,34 @@ int main(int argc, char *argv[])
     {
         init();
     }
-
     else if (command == "add" && argc >= 3)
     {
         add(argv[2]);
     }
-
     else if (command == "commit" && argc >= 4 && string(argv[2]) == "-m")
     {
         commit(argv[3]);
     }
-
     else if (command == "log")
     {
         log();
     }
-
     else if (command == "branch" && argc >= 3)
     {
         createBranch(argv[2]);
     }
-
     else if (command == "checkout" && argc >= 3)
     {
         checkout(argv[2]);
     }
-
     else if (command == "merge" && argc >= 3)
     {
         merge(argv[2]);
     }
-
     else if (command == "diff" && argc >= 4)
     {
         diff(argv[2], argv[3]);
     }
-
     else
     {
         cout << "Unknown or incomplete command." << endl;
