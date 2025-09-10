@@ -1,11 +1,16 @@
 #include <iostream>
 #include <string>
 #include "../include/git_commands.h"
+<<<<<<< HEAD
 #include <bits/stdc++.h>
+=======
+
+>>>>>>> 4d7a456ab10636be5fc14449d2fb2c4c38270d76
 using namespace std;
 
 void print_usage()
 {
+<<<<<<< HEAD
     cout << "If mygit is not added to system add that using: " << endl;
     // cout << "But if mygit is added to system path you can remove the ./ before mygit to use it."<< endl;
     cout << endl;
@@ -17,6 +22,19 @@ void print_usage()
     cout << "6. ./mygit checkout branch_name" << endl;
     cout << "7. ./mygit merge branch_name  (But don't forget to checkout to the specific branch first.)" << endl;
     cout << "8. ./mygit diff <commit1> <commit2>  (You can get the commit hash of two files using log.)" << endl;
+=======
+    cout << "If minigit is not added to system path you can use the commands listed below as they are." << endl;
+    cout << "But if minigit is added to system path you can remove the ./ before minigit to use it." << endl;
+    cout << endl;
+    cout << "1. ./minigit init" << endl;
+    cout << "2. ./minigit add <file>" << endl;
+    cout << "3. ./minigit commit -m 'commit message goes here'" << endl;
+    cout << "4. ./minigit log" << endl;
+    cout << "5. ./minigit branch branch_name" << endl;
+    cout << "6. ./minigit checkout branch_name" << endl;
+    cout << "7. ./minigit merge branch_name  (But don't forget to checkout to the specific branch first.)" << endl;
+    cout << "8. ./minigit diff <commit1> <commit2>  (You can get the commit hash of two files using log.)" << endl;
+>>>>>>> 4d7a456ab10636be5fc14449d2fb2c4c38270d76
     cout << endl;
 }
 
