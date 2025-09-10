@@ -22,7 +22,7 @@ This project was built to understand the inner workings of version control while
 ./mygit add file.txt
 ./mygit commit -m "Initial commit"
 ./mygit log
-./mygit branch feature-x
-./mygit checkout feature-x
-./mygit merge main
-./mygit diff <commit1> <commit2>
+./mygit branch branch_na,e
+./mygit checkout branch_name
+./mygit merge branch_name
+./mygit diff <commit1-hash> <commit2-hash>

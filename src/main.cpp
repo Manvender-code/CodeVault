@@ -6,7 +6,7 @@ using namespace std;
 void print_usage()
 {
     cout << "If mygit is not added to system add that using: " << endl;
-    // cout << "But if mygit is added to system path you can remove the ./ before mygit to use it."<< endl;
+   
     cout << endl;
     cout << "1. ./mygit init" << endl;
     cout << "2. ./mygit add <file>" << endl;

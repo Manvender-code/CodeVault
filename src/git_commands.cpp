@@ -9,7 +9,6 @@
 namespace fs = std::filesystem;
 using namespace std;
 
-// Helper function declarations
 string getCurrentBranch();
 string getParentCommit(const string &branchName);
 void updateLatestCommit(const string &branch, const string &newHash);
@@ -24,9 +23,9 @@ void init()
     fs::create_directory(Code_Vault);
     fs::create_directory(Objects);
     fs::create_directory(Commits);
-    ofstream(Head_File) << "main";            // default branch
-    ofstream(Branch_File) << "main:null\n"; // branch -> commit
-    ofstream(Index_File);                     // empty staging area
+    ofstream(Head_File) << "main";           
+    ofstream(Branch_File) << "main:null\n"; 
+    ofstream(Index_File);                    
 
     cout << "Initialized empty MiniGit repository." << endl;
 }
@@ -86,7 +85,7 @@ void commit(const string &message)
 
     updateLatestCommit(branch, commitHash);
 
-    ofstream(Index_File, ofstream::out | ofstream::trunc); // clear staging area
+    ofstream(Index_File, ofstream::out | ofstream::trunc); 
     cout << "Committed. Hash: " << commitHash << endl;
 }
 
@@ -110,7 +109,7 @@ void log()
                 cout << line << endl;
             }
         }
-        cout << "###################################" << endl;
+        cout << "-------------------------------------------------------------" << endl;
 
         in.clear();
         in.seekg(0, ios::beg);
@@ -149,8 +148,7 @@ void checkout(const string &target)
 
     if (fs::exists(Commits + "/" + target))
     {
-        // This is a simplified checkout to a commit hash.
-        // A full implementation would restore the working directory.
+       
         cout << "Checked out commit (read-only): " << target << endl;
     }
     else
@@ -202,7 +200,7 @@ void merge(const string &targetBranch)
             {
                 cout << "CONFLICT: both modified " << file << endl;
             }
-            mergedFiles[file] = hashVal; // prefer current branch version in case of conflict
+            mergedFiles[file] = hashVal; 
         }
     }
 
@@ -265,7 +263,6 @@ void diff(const string &commit1, const string &commit2)
     }
 }
 
-// Helper function definitions
 string getCurrentBranch()
 {
     ifstream headIn(Head_File);
