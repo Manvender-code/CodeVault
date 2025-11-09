@@ -5,174 +5,210 @@
 #include <ctime>
 #include <sstream>
 
-using namespace std;
-namespace fs = filesystem;
-
-string Hash(const string &content)
+std::string Hash(const std::string &content)
 {
-    hash<string> hasher;
-    return to_string(hasher(content));
+    std::hash<std::string> hasher;
+    return std::to_string(hasher(content));
 }
 
-const string Code_Vault = ".mygit";
-const string Objects = Code_Vault + "/objects";
-const string Commits = Code_Vault + "/commits";
-const string Head_File = Code_Vault + "/HEAD.txt";
-const string Index_File = Code_Vault + "/index.txt";
-const string Branch_File = Code_Vault + "/branches.txt";
+const std::string Code_Vault = ".vault";
+const std::string Objects = Code_Vault + "/objects";
+const std::string Commits = Code_Vault + "/commits";
+const std::string Head_File = Code_Vault + "/HEAD.txt";
+const std::string Index_File = Code_Vault + "/index.txt";
+const std::string Branch_File = Code_Vault + "/branches.txt";
 
-string getCurrentTime()
+std::string getCurrentTime()
 {
-    time_t now = time(0);
-    char *dt = ctime(&now);
-    return string(dt);
+    std::time_t now = std::time(0);
+    char *dt = std::ctime(&now);
+    return std::string(dt);
 }
 
 void init()
 {
-    if (fs::exists(Code_Vault))
+    if (std::filesystem::exists(Code_Vault))
     {
-        cout << "mygit is already initialized." << endl;
+        std::cout << "vault is already initialized." << std::endl;
         return;
     }
-    fs::create_directory(Code_Vault);
-    fs::create_directory(Objects);
-    fs::create_directory(Commits);
-    ofstream(Head_File) << "main";
-    ofstream(Branch_File) << "main:null\n";
-    ofstream(Index_File);
-    cout << "Initialized empty mygit repository." << endl;
+    std::filesystem::create_directory(Code_Vault);
+    std::filesystem::create_directory(Objects);
+    std::filesystem::create_directory(Commits);
+    std::ofstream(Head_File) << "main";
+    std::ofstream(Branch_File) << "main:null\n";
+    std::ofstream(Index_File);
+    std::cout << "Initialized empty vault repository." << std::endl;
 }
 
-void add(const string &filename)
+void ensureBranchExists(const std::string &branch)
 {
-    ifstream inFile(filename);
+    std::ifstream in(Branch_File);
+    std::string line;
+    while (std::getline(in, line))
+    {
+        size_t sep = line.find(":");
+        if (sep != std::string::npos && line.substr(0, sep) == branch)
+            return;
+    }
+    std::ofstream out(Branch_File, std::ios::app);
+    out << branch << ":null\n";
+}
+
+void add(const std::string &filename)
+{
+    std::ifstream inFile(filename);
     if (!inFile)
     {
-        cout << "File not found: " << filename << endl;
+        std::cout << "File not found: " << filename << std::endl;
         return;
     }
-    stringstream buffer;
+    std::stringstream buffer;
     buffer << inFile.rdbuf();
-    string content = buffer.str();
-    string hash = Hash(content);
-
-    ofstream outFile(Objects + "/" + hash);
+    std::string content = buffer.str();
+    std::string hash = Hash(content);
+    std::ofstream outFile(Objects + "/" + hash);
     outFile << content;
     outFile.close();
-
-    ofstream indexOut(Index_File, ios::app);
-    indexOut << filename << ":" << hash << endl;
-
-    cout << "Staged file: " << filename << endl;
+    std::ofstream indexOut(Index_File, std::ios::app);
+    indexOut << filename << ":" << hash << std::endl;
+    std::cout << "Staged file: " << filename << std::endl;
 }
 
-string getCurrentBranch()
+std::string getCurrentBranch()
 {
-    ifstream headIn(Head_File);
-    string branch;
-    getline(headIn, branch);
+    std::ifstream headIn(Head_File);
+    std::string branch;
+    std::getline(headIn, branch);
     return branch;
 }
 
-string getParentCommit(const string &branchName)
+std::string getParentCommit(const std::string &branchName)
 {
-    ifstream branchesIn(Branch_File);
-    string line;
-    while (getline(branchesIn, line))
+    std::ifstream branchesIn(Branch_File);
+    std::string line;
+    while (std::getline(branchesIn, line))
     {
         size_t sep = line.find(":");
         if (line.substr(0, sep) == branchName)
-        {
             return line.substr(sep + 1);
-        }
     }
     return "null";
 }
 
-void updateLatestCommit(const string &branch, const string &newHash)
+void updateLatestCommit(const std::string &branch, const std::string &newHash)
 {
-    ifstream in(Branch_File);
-    stringstream updated;
-    string line;
-    while (getline(in, line))
+    std::ifstream in(Branch_File);
+    std::stringstream updated;
+    std::string line;
+    bool found = false;
+    while (std::getline(in, line))
     {
         size_t sep = line.find(":");
-        string name = line.substr(0, sep);
+        std::string name = line.substr(0, sep);
         if (name == branch)
         {
             updated << name << ":" << newHash << "\n";
+            found = true;
         }
         else
-        {
             updated << line << "\n";
-        }
     }
-    ofstream out(Branch_File);
+    in.close();
+    if (!found)
+        updated << branch << ":" << newHash << "\n";
+    std::ofstream out(Branch_File);
     out << updated.str();
 }
 
-void commit(const string &message)
+void commit(const std::string &message)
 {
-    ifstream indexIn(Index_File);
+    std::ifstream indexIn(Index_File);
     if (!indexIn)
     {
-        cout << "There is nothing to commit." << endl;
+        std::cout << "No files staged for commit.\n";
         return;
     }
 
-    stringstream commitData;
-    string line;
-    while (getline(indexIn, line))
+    std::stringstream commitData;
+    std::string line;
+    bool hasFiles = false;
+
+    while (std::getline(indexIn, line))
     {
-        commitData << line << endl;
+        if (!line.empty())
+        {
+            commitData << line << "\n";
+            hasFiles = true;
+        }
+    }
+    indexIn.close();
+
+    if (!hasFiles)
+    {
+        std::cout << "Nothing to commit.\n";
+        return;
     }
 
-    string timestamp = getCurrentTime();
-    string branch = getCurrentBranch();
-    string parent = getParentCommit(branch);
+    std::string branch = getCurrentBranch();
+    ensureBranchExists(branch);
+    std::string timestamp = getCurrentTime();
+    std::string parent = getParentCommit(branch);
 
-    string metadata = "message: " + message + "\n" +
-                      "timestamp: " + timestamp +
-                      "parent: " + parent + "\n" +
-                      "branch: " + branch + "\n";
+    std::string metadataWithoutHash =
+        "message: " + message + "\n" +
+        "timestamp: " + timestamp +
+        "parent: " + parent + "\n" +
+        "branch: " + branch + "\n";
 
-    string commitHash = Hash(metadata + commitData.str());
-    ofstream commitOut(Commits + "/" + commitHash);
-    commitOut << metadata;
-    commitOut << commitData.str();
+    std::string tempHash = Hash(metadataWithoutHash + commitData.str());
 
-    updateLatestCommit(branch, commitHash);
+    std::string metadata =
+        "message: " + message + "\n" +
+        "timestamp: " + timestamp +
+        "parent: " + parent + "\n" +
+        "branch: " + branch + "\n" +
+        "current_hash: " + tempHash + "\n";
 
-    ofstream(Index_File);
-    cout << "Committed. Hash: " << commitHash << endl;
+    std::string commitPath = Commits + "/" + tempHash;
+    if (!std::filesystem::exists(commitPath))
+    {
+        std::ofstream commitOut(commitPath);
+        commitOut << metadata << commitData.str();
+        commitOut.close();
+    }
+
+    updateLatestCommit(branch, tempHash);
+
+    std::ofstream clear(Index_File, std::ios::trunc);
+    clear.flush();
+    clear.close();
+
+    std::cout << "Committed successfully. Hash: " << tempHash << "\n";
 }
 
 void log()
 {
-    string branch = getCurrentBranch();
-    string current = getParentCommit(branch);
-
+    std::string branch = getCurrentBranch();
+    std::string current = getParentCommit(branch);
     while (current != "null")
     {
-        string path = Commits + "/" + current;
-        ifstream in(path);
-        string line;
-        cout << "Commit: " << current << endl;
-        while (getline(in, line))
+        std::string path = Commits + "/" + current;
+        std::ifstream in(path);
+        std::string line;
+        std::cout << "Commit: " << current << std::endl;
+        while (std::getline(in, line))
         {
             if (line.rfind("message:", 0) == 0 ||
                 line.rfind("timestamp:", 0) == 0 ||
-                line.rfind("parent:", 0) == 0)
-            {
-                cout << line << endl;
-            }
+                line.rfind("parent:", 0) == 0 ||
+                line.rfind("current_hash:", 0) == 0)
+                std::cout << line << std::endl;
         }
-        cout << "-------------------------------------------------------------" << endl;
-
+        std::cout << "-------------------------------------------------------------" << std::endl;
         in.clear();
-        in.seekg(0, ios::beg);
-        while (getline(in, line))
+        in.seekg(0, std::ios::beg);
+        while (std::getline(in, line))
         {
             if (line.rfind("parent:", 0) == 0)
             {
@@ -183,139 +219,127 @@ void log()
     }
 }
 
-void createBranch(const string &branchName)
+void createBranch(const std::string &branchName)
 {
-    string current = getParentCommit(getCurrentBranch());
-    ofstream branchesOut(Branch_File, ios::app);
+    std::string current = getParentCommit(getCurrentBranch());
+    std::ofstream branchesOut(Branch_File, std::ios::app);
     branchesOut << branchName << ":" << current << "\n";
-    cout << "Created branch: " << branchName << endl;
+    std::cout << "Created branch: " << branchName << std::endl;
 }
 
-void checkout(const string &target)
+void checkout(const std::string &target)
 {
-    string hash = getParentCommit(target);
+    std::string hash = getParentCommit(target);
     if (hash != "null")
     {
-        ofstream(Head_File) << target;
-        cout << "Switched to branch: " << target << endl;
+        std::ofstream(Head_File) << target;
+        std::cout << "Switched to branch: " << target << std::endl;
         return;
     }
-
-    if (fs::exists(Commits + "/" + target))
-    {
-        cout << "Checked out commit: " << target << endl;
-    }
+    if (std::filesystem::exists(Commits + "/" + target))
+        std::cout << "Checked out commit: " << target << std::endl;
     else
-    {
-        cout << "Branch or commit not found: " << target << endl;
-    }
+        std::cout << "Branch or commit not found: " << target << std::endl;
 }
 
-void merge(const string &targetBranch)
+void merge(const std::string &targetBranch)
 {
-    string currentBranch = getCurrentBranch();
-    string currentCommit = getParentCommit(currentBranch);
-    string targetCommit = getParentCommit(targetBranch);
-
+    std::string currentBranch = getCurrentBranch();
+    std::string currentCommit = getParentCommit(currentBranch);
+    std::string targetCommit = getParentCommit(targetBranch);
     if (targetCommit == "null")
     {
-        cout << "Branch not found or no commits in target branch." << endl;
+        std::cout << "Branch not found or no commits in target branch." << std::endl;
         return;
     }
 
-    ifstream targetIn(Commits + "/" + targetCommit);
-    string line, mergedData;
-    unordered_map<string, string> mergedFiles;
+    std::ifstream targetIn(Commits + "/" + targetCommit);
+    std::string line;
+    std::unordered_map<std::string, std::string> mergedFiles;
 
-    while (getline(targetIn, line))
+    while (std::getline(targetIn, line))
     {
-        if (line.find(":") != string::npos && line.find("message:") != 0 &&
+        if (line.find(":") != std::string::npos && line.find("message:") != 0 &&
             line.find("timestamp:") != 0 && line.find("parent:") != 0 &&
-            line.find("branch:") != 0)
+            line.find("branch:") != 0 && line.find("current_hash:") != 0)
         {
             size_t sep = line.find(":");
-            string file = line.substr(0, sep);
-            string hash = line.substr(sep + 1);
+            std::string file = line.substr(0, sep);
+            std::string hash = line.substr(sep + 1);
             mergedFiles[file] = hash;
         }
     }
 
-    ifstream currentIn(Commits + "/" + currentCommit);
-    while (getline(currentIn, line))
+    std::ifstream currentIn(Commits + "/" + currentCommit);
+    while (std::getline(currentIn, line))
     {
-        if (line.find(":") != string::npos && line.find("message:") != 0 &&
+        if (line.find(":") != std::string::npos && line.find("message:") != 0 &&
             line.find("timestamp:") != 0 && line.find("parent:") != 0 &&
-            line.find("branch:") != 0)
+            line.find("branch:") != 0 && line.find("current_hash:") != 0)
         {
             size_t sep = line.find(":");
-            string file = line.substr(0, sep);
-            string hash = line.substr(sep + 1);
+            std::string file = line.substr(0, sep);
+            std::string hash = line.substr(sep + 1);
             if (mergedFiles.find(file) != mergedFiles.end() && mergedFiles[file] != hash)
-            {
-                cout << "CONFLICT: both modified " << file << endl;
-            }
+                std::cout << "CONFLICT: both modified " << file << std::endl;
             mergedFiles[file] = hash;
         }
     }
 
-    ofstream indexOut(Index_File);
+    std::ofstream indexOut(Index_File);
     for (const auto &[file, hash] : mergedFiles)
-    {
-        indexOut << file << ":" << hash << endl;
-    }
+        indexOut << file << ":" << hash << std::endl;
 
-    stringstream msg;
+    std::stringstream msg;
     msg << "Merged branch " << targetBranch;
     commit(msg.str());
 }
 
-void diff(const string &commit1, const string &commit2)
+void diff(const std::string &commit1, const std::string &commit2)
 {
-    ifstream in1(Commits + "/" + commit1);
-    ifstream in2(Commits + "/" + commit2);
+    std::ifstream in1(Commits + "/" + commit1);
+    std::ifstream in2(Commits + "/" + commit2);
     if (!in1 || !in2)
     {
-        cout << "One of the commits or both are not found." << endl;
+        std::cout << "One of the commits or both are not found." << std::endl;
         return;
     }
 
-    unordered_map<string, string> map1, map2;
-    string line;
-    while (getline(in1, line))
+    std::unordered_map<std::string, std::string> map1, map2;
+    std::string line;
+    while (std::getline(in1, line))
     {
-        if (line.find(":") != string::npos && line.find("message:") != 0 && line.find("timestamp:") != 0 && line.find("parent:") != 0 && line.find("branch:") != 0)
+        if (line.find(":") != std::string::npos && line.find("message:") != 0 &&
+            line.find("timestamp:") != 0 && line.find("parent:") != 0 &&
+            line.find("branch:") != 0 && line.find("current_hash:") != 0)
         {
             size_t sep = line.find(":");
             map1[line.substr(0, sep)] = line.substr(sep + 1);
         }
     }
-    while (getline(in2, line))
+    while (std::getline(in2, line))
     {
-        if (line.find(":") != string::npos && line.find("message:") != 0 && line.find("timestamp:") != 0 && line.find("parent:") != 0 && line.find("branch:") != 0)
+        if (line.find(":") != std::string::npos && line.find("message:") != 0 &&
+            line.find("timestamp:") != 0 && line.find("parent:") != 0 &&
+            line.find("branch:") != 0 && line.find("current_hash:") != 0)
         {
             size_t sep = line.find(":");
             map2[line.substr(0, sep)] = line.substr(sep + 1);
         }
     }
 
-    cout << "### Diff between " << commit1 << " and " << commit2 << " ###" << endl;
+    std::cout << "### Diff between " << commit1 << " and " << commit2 << " ###" << std::endl;
     for (const auto &[file, hash1] : map1)
     {
         if (map2.find(file) == map2.end())
-        {
-            cout << file << " was removed in " << commit2 << endl;
-        }
+            std::cout << file << " was removed in " << commit2 << std::endl;
         else if (map2[file] != hash1)
-        {
-            cout << file << " was modified." << endl;
-        }
+            std::cout << file << " was modified." << std::endl;
     }
     for (const auto &[file, hash2] : map2)
     {
         if (map1.find(file) == map1.end())
-        {
-            cout << file << " was added in " << commit2 << endl;
-        }
+            std::cout << file << " was added in " << commit2 << std::endl;
     }
 }
 
@@ -323,57 +347,39 @@ int main(int argc, char *argv[])
 {
     if (argc < 2)
     {
-        cout << "If mygit is not added to system add that using: " << endl;
-        cout << endl;
-        cout << "1. ./mygit init" << endl;
-        cout << "2. ./mygit add <file>" << endl;
-        cout << "3. ./mygit commit -m 'commit message goes here'" << endl;
-        cout << "4. ./mygit log" << endl;
-        cout << "5. ./mygit branch branch_name" << endl;
-        cout << "6. ./mygit checkout branch_name" << endl;
-        cout << "7. ./mygit merge branch_name  (But don't forget to checkout to the specific branch first.)" << endl;
-        cout << "8. ./mygit diff <commit1> <commit2>  (You can get the commit hash of two files using log.)" << endl;
-        cout << endl;
+        std::cout << "If vault is not added to our system add that using following commands: " << std::endl
+                  << std::endl;
+        std::cout << "1. ./vault init" << std::endl;
+        std::cout << "2. ./vault add <file>" << std::endl;
+        std::cout << "3. ./vault commit -m 'commit message goes here'" << std::endl;
+        std::cout << "4. ./vault log" << std::endl;
+        std::cout << "5. ./vault branch branch_name" << std::endl;
+        std::cout << "6. ./vault checkout branch_name" << std::endl;
+        std::cout << "7. ./vault merge branch_name" << std::endl;
+        std::cout << "8. ./vault diff <commit1> <commit2>" << std::endl
+                  << std::endl;
         return 1;
     }
 
-    string command = argv[1];
+    std::string command = argv[1];
     if (command == "init")
-    {
         init();
-    }
     else if (command == "add" && argc >= 3)
-    {
         add(argv[2]);
-    }
-    else if (command == "commit" && argc >= 4 && string(argv[2]) == "-m")
-    {
+    else if (command == "commit" && argc >= 4 && std::string(argv[2]) == "-m")
         commit(argv[3]);
-    }
     else if (command == "log")
-    {
         log();
-    }
     else if (command == "branch" && argc >= 3)
-    {
         createBranch(argv[2]);
-    }
     else if (command == "checkout" && argc >= 3)
-    {
         checkout(argv[2]);
-    }
     else if (command == "merge" && argc >= 3)
-    {
         merge(argv[2]);
-    }
     else if (command == "diff" && argc >= 4)
-    {
         diff(argv[2], argv[3]);
-    }
     else
-    {
-        cout << "Unknown or incomplete command." << endl;
-    }
+        std::cout << "Unknown or incomplete command." << std::endl;
 
     return 0;
 }
