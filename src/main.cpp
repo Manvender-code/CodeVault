@@ -5,17 +5,17 @@ using namespace std;
 
 void print_usage()
 {
-    cout << "If mygit is not added to system add that using: " << endl;
+    cout << "If vault is not added to system add that using: " << endl;
    
     cout << endl;
-    cout << "1. ./mygit init" << endl;
-    cout << "2. ./mygit add <file>" << endl;
-    cout << "3. ./mygit commit -m 'commit message goes here'" << endl;
-    cout << "4. ./mygit log" << endl;
-    cout << "5. ./mygit branch branch_name" << endl;
-    cout << "6. ./mygit checkout branch_name" << endl;
-    cout << "7. ./mygit merge branch_name  (But don't forget to checkout to the specific branch first.)" << endl;
-    cout << "8. ./mygit diff <commit1> <commit2>  (You can get the commit hash of two files using log.)" << endl;
+    cout << "1. ./vault init" << endl;
+    cout << "2. ./vault add <file>" << endl;
+    cout << "3. ./vault commit -m 'commit message goes here'" << endl;
+    cout << "4. ./vault log" << endl;
+    cout << "5. ./vault branch branch_name" << endl;
+    cout << "6. ./vault checkout branch_name" << endl;
+    cout << "7. ./vault merge branch_name  (But don't forget to checkout to the specific branch first.)" << endl;
+    cout << "8. ./vault diff <commit1> <commit2>  (You can get the commit hash of two files using log.)" << endl;
 }
 int main(int argc, char *argv[])
 {

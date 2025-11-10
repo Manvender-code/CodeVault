@@ -17,7 +17,7 @@ void init()
 {
     if (fs::exists(Code_Vault))
     {
-        cout << "MiniGit is already initialized." << endl;
+        cout << "Vault is already initialized." << endl;
         return;
     }
     fs::create_directory(Code_Vault);
@@ -27,7 +27,7 @@ void init()
     ofstream(Branch_File) << "main:null\n"; 
     ofstream(Index_File);                    
 
-    cout << "Initialized empty MiniGit repository." << endl;
+    cout << "Initialized empty Vault repository." << endl;
 }
 
 void add(const string &filename)
